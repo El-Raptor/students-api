@@ -1,3 +1,4 @@
 module.exports = {
-    dialect: 'postgres'
+    dialect: 'sqlite',
+    storage: '../database/database.sqlite'
 }
