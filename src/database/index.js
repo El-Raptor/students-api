@@ -1,6 +1,13 @@
-const Sequelize = require('sequelize');
-const dbConfig = require('../config/database');
+const sqlite3 = require('sqlite3').verbose();
 
-const connection = new Sequelize(dbConfig);
+let db = new sqlite3.Database('./index.db', (err) => {
+    if (err) {
+        return console.error(err.message);
+    }
+    console.log('Connected to the index SQLite database.');
+});
 
-module.exports = connection;
+const sql = 'CREATE TABLE IF NOT EXISTS students (rga TEXT, nome TEXT, curso TEXT)'
+db.run(sql);
+
+module.exports = db;
