@@ -7,7 +7,7 @@ let db = new sqlite3.Database('./index.db', (err) => {
     console.log('Connected to the index SQLite database.');
 });
 
-const sql = 'CREATE TABLE IF NOT EXISTS students (rga TEXT, nome TEXT, curso TEXT)'
+const sql = 'CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, rga TEXT NOT NULL, nome TEXT NOT NULL, curso TEXT)'
 db.run(sql);
 
 module.exports = db;

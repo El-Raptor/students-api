@@ -9,8 +9,34 @@ router.get('/', (req, res, next) => {
     /*const limit = req.params.limit;
     const page = req.params.page;
     const name = req.params.name;*/
-    const sql = `SELECT * FROM students`;
-    db.all(sql, [], (err, rows) => {
+    var pagina =1;
+    var limite = 25;
+    var nome = "";
+    var parametros = [];
+    
+    var sql = `SELECT * FROM students `;
+    var where = " where ID IN (SELECT ID FROM students where upper(nome) like upper(?))";
+
+    if(req.query["nome"]){
+        nome = '%' + req.query["nome"] + '%';
+        parametros.push(nome);
+        sql += where;
+    }
+
+    if(req.query["limite"]){
+        limite = req.query["limite"];
+    }
+    parametros.push(parseInt(limite));
+
+    pagina = pagina -1;
+    if(req.query["pagina"]){
+        pagina = (req.query["pagina"] - 1) * limite;
+    }
+    parametros.push(pagina);
+    
+    sql += "ORDER BY nome LIMIT ? OFFSET ?"
+    
+    db.all(sql, parametros, (err, rows) => {
         if (err) {
             res.status(400).send({ error: err.message });
             return;
@@ -33,7 +59,7 @@ router.post('/', (req, res, next) => {
         curso: req.body.curso
     };
     const sql = `INSERT INTO students (rga, nome, curso) VALUES(?, ?, ?)`;
-    db.run(sql, [student.rga, student.nome, student.curso], (err) => {
+    db.run(sql, [student.rga, student.nome, student.curso], function (err) {
         if (err) {
             res.status(400).send({ error: err.message });
             return;
@@ -43,14 +69,14 @@ router.post('/', (req, res, next) => {
             student: student,
             id: this.lastID
         })
-        console.log(`A row has been inserted with rowid ${this.lastID}`);
+        console.log(`A row has been inserted with id ${this.lastID}`);
     })
 });
 
 // Retorna um aluno de um ID específico.
 router.get('/:id', (req, res, next) => {
     const id = req.params.id;
-    const sql = `SELECT * FROM students WHERE rowid = ?`
+    const sql = `SELECT * FROM students WHERE id = ?`
     db.get(sql, id, (err, row) => {
         if (err) {
             res.status(400).send({ error: err.message });
@@ -81,9 +107,9 @@ router.patch('/:id', (req, res, next) => {
             nome = COALESCE(?, nome),
             rga = COALESCE(?, rga),
             curso = COALESCE(?, curso)
-        WHERE rowid = ?`,
+        WHERE id = ?`,
         [data.nome, data.rga, data.curso, req.params.id],
-        (err, result) => {
+        function (err) {
             if (err) {
                 res.status(400).send({ error: err.message });
                 return;
@@ -105,10 +131,10 @@ router.patch('/:id', (req, res, next) => {
 
 // Deleta um aluno.
 router.delete('/:id', (req, res, next) => {
-    const sql = 'DELETE FROM students WHERE rowid = ?';
+    const sql = 'DELETE FROM students WHERE id = ?';
     const param = req.params.id;
 
-    db.run(sql, param, (err, result) => {
+    db.run(sql, param, function(err) {
         if (err) {
             res.status(400).send({ error: err.message });
             return;
@@ -118,6 +144,7 @@ router.delete('/:id', (req, res, next) => {
             res.status(404).send({ message: 'Aluno não encontrado' });
             return;
         }
+
         res.status(200).send({
             message: 'Aluno deletado com sucesso.',
             changes: this.changes
